@@ -138,12 +138,17 @@ Route::put('public/kanban/{columnaId}/tareas/{task_id}/mover', [KanbanController
 
 // PARA USAR LA API DE JITSI
 // Mostrar la vista para crear salas Jitsi
-Route::get('/jitsi', function () {
-    return view('jitsi');
-});
+//Route::get('/jitsi', function () {
+  //  return view('jitsi');
+//});
 
 // Crear una sala Jitsi
 Route::post('/jitsi/create-room', [JitsiController::class, 'createRoom']);
+
+
+Route::get('/jitsi', function () {
+    return view('jitsi', ['roomName' => '']);
+});
 
 
 

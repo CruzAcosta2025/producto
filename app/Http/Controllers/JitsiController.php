@@ -15,11 +15,7 @@ class JitsiController extends Controller
         // Obtener el nombre de la sala
         $roomName = $request->input('room_name');
 
-        // Generar el enlace a la sala de Jitsi Meet
-        $jitsiUrl = "https://meet.jit.si/" . urlencode($roomName);
-
-        // Redirigir al usuario a la sala creada
-        return redirect()->to($jitsiUrl);
+        // Renderizar la vista de Jitsi con el nombre de la sala
+        return view('jitsi', ['roomName' => $roomName]);
     }
 }
-

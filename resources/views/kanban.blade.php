@@ -26,12 +26,10 @@
     </div>
 
     <!-- Contenedor de Tableros -->
-    <div id="kanban-tableros" class="flex gap-6 overflow-x-auto max-w-full">
+    <div id="kanban-tableros" class="flex gap-6 overflow-x-auto max-w-full flex-wrap">
         <!-- Los tableros se cargarán dinámicamente aquí -->
     </div>
 </div>
-
-
 
 
 <!-- Template para Tablero -->
@@ -212,8 +210,6 @@
 </div>
 
 
-
-
 @endsection
 
 @section('scripts')
@@ -229,8 +225,14 @@
         const modalTablero = document.getElementById('modal-tablero');
         const formTablero = document.getElementById('form-tablero');
         const modalCancelar = document.getElementById('modal-cancelar');
+        const modalTarea = document.getElementById('modal-tarea');
+        const formTarea = document.getElementById('form-tarea');
+        const tareaNombreInput = document.getElementById('tarea-nombre');
+        const tareaIdInput = document.getElementById('tarea-id');
+        const modalCancelarTarea = document.getElementById('modal-cancelar-tarea');
         const tableroNombreInput = document.getElementById('tablero-nombre');
         const tableroIdInput = document.getElementById('tablero-id');
+        const modalTitleTarea = document.getElementById('modal-tarea-title');
         const modalTitle = document.getElementById('modal-tablero-title');
 
 
@@ -246,6 +248,15 @@
             tableroNombreInput.value = '';
             modalTitle.textContent = 'Crear Tablero';
         }
+
+        function ocultarModalTarea() {
+            modalTarea.classList.add('hidden');
+            tareaIdInput.value = '';
+            tareaNombreInput.value = '';
+            modalTitle.textContent = 'Crear Tarea';
+        }
+
+        
 
         // Mostrar modal al hacer clic en "Nuevo Tablero"
         btnNuevoTablero.addEventListener('click', function() {
@@ -325,15 +336,15 @@
                         console.log('Tablero:', tablero); // Inspeccionar cada tablero
                         agregarTableroDOM(tablero);
 
-                        tablero.columns.forEach(columna => {
-                            console.log('Columna:', columna); // Inspeccionar cada columna
-                            agregarColumnaDOM(columna, kanbanTableros, tablero);
+                        //tablero.columns.forEach(columna => {
+                        //  console.log('Columna:', columna); // Inspeccionar cada columna
+                        //agregarColumnaDOM(columna, kanbanTableros, tablero);
 
-                            columna.tasks.forEach(tarea => {
-                                console.log('Tarea:', tarea); // Inspeccionar cada tarea
-                                agregarTareaDOM(tarea, kanbanTableros);
-                            });
-                        });
+                        //columna.tasks.forEach(tarea => {
+                        //  console.log('Tarea:', tarea); // Inspeccionar cada tarea
+                        //agregarTareaDOM(tarea, kanbanTableros);
+                        //});
+                        //});
                     });
                 })
                 .catch(error => console.error('Error al cargar tableros:', error));
@@ -356,6 +367,8 @@
             // Mostrar el modal
             modalTablero.classList.remove('hidden');
         }
+
+
 
 
 
@@ -464,6 +477,7 @@
 
         //PARA LA GESTION DE TAREAS
         // Crear tarea
+
         function crearTarea(columnaId, tareasContainer) {
             // Mostrar el modal de tarea
             const modalTarea = document.getElementById('modal-tarea');
@@ -513,7 +527,8 @@
                     .then(data => {
                         if (data.success) {
                             agregarTareaDOM(data.tarea, tareasContainer);
-                            modalTarea.classList.add('hidden'); // Ocultar el modal
+                            ocultarModalTarea();
+                            
                         } else {
                             console.error('Error al crear tarea:', data.error);
                         }
@@ -521,7 +536,6 @@
                     .catch(error => console.error('Error:', error));
             };
         }
-
 
 
         // Agregar tarea al DOM
@@ -544,12 +558,12 @@
     `;
 
             // Añadir los eventos para los botones de mover
+            
             const btnMoverIzquierda = template.querySelector('.btn-mover-izquierda');
             const btnMoverDerecha = template.querySelector('.btn-mover-derecha');
 
-            // Agregar evento para mover la tarea
-            btnMoverIzquierda.addEventListener('click', () => moverTarea(tarea.id, tarea.kanban_column_id, 'left'));
-            btnMoverDerecha.addEventListener('click', () => moverTarea(tarea.id, tarea.kanban_column_id, 'right'));
+            btnMoverIzquierda.addEventListener('click', () => moverTarea(tarea.id, tareasContainer.closest('[data-columna-id]').getAttribute('data-columna-id'), 'left'));
+            btnMoverDerecha.addEventListener('click', () => moverTarea(tarea.id, tareasContainer.closest('[data-columna-id]').getAttribute('data-columna-id'), 'right'));
 
             // Seleccionar el botón de eliminar dentro del template
             const btnEliminarTarea = template.querySelector('.btn-eliminar-tarea');
@@ -561,99 +575,80 @@
             tareasContainer.appendChild(template);
         }
 
+        // Función para mover tarea
+        function moverTarea(tareaId, columnaId, direccion) {
+            // Seleccionar todas las columnas dentro de su contenedor
+            const columnas = Array.from(document.querySelectorAll('[data-columna-id]'));
+            const currentColumna = document.querySelector(`[data-columna-id="${columnaId}"]`);
 
-        // Función para mover la tarea
-
-        function moverTarea(event, direccion) {
-            // Buscar el contenedor de la tarea y la columna
-            const tareaElement = event.target.closest('[data-tarea-id]');
-            const columnaElement = tareaElement.closest('[data-columna-id]');
-
-            // Si no se encuentran los elementos necesarios, retorna
-            if (!tareaElement || !columnaElement) {
-                console.error('Error: Elementos de tarea o columna no encontrados.');
+            if (!currentColumna) {
+                console.error("No se encontró la columna actual en el DOM.");
                 return;
             }
 
-            const tareaId = tareaElement.getAttribute('data-tarea-id');
-            const columnaId = columnaElement.getAttribute('data-columna-id');
+            const indexColumna = columnas.indexOf(currentColumna);
 
-            // Validar la dirección (izquierda o derecha)
-            let nuevaColumnaId;
-
-            if (direccion === 'left') {
-                // Obtener la columna anterior
-                nuevaColumnaId = obtenerColumnaVecina(columnaId, 'left');
-            } else if (direccion === 'right') {
-                // Obtener la columna siguiente
-                nuevaColumnaId = obtenerColumnaVecina(columnaId, 'right');
-            } else {
-                alert('Dirección inválida');
+            if (indexColumna === -1) {
+                console.error("No se encontró la columna actual en el array.");
                 return;
+            }
+
+            let nuevaColumnaId;
+            if (direccion === 'left' && indexColumna > 0) {
+                nuevaColumnaId = columnas[indexColumna - 1]?.getAttribute('data-columna-id');
+            } else if (direccion === 'right' && indexColumna < columnas.length - 1) {
+                nuevaColumnaId = columnas[indexColumna + 1]?.getAttribute('data-columna-id');
             }
 
             if (!nuevaColumnaId) {
-                alert('No se puede mover la tarea a la columna seleccionada.');
+                console.warn("No hay columna válida en la dirección especificada.");
                 return;
             }
 
-            // Enviar la solicitud PUT al servidor para mover la tarea
-            fetch(`/kanban/${columnaId}/tareas/${tareaId}/mover`, {
+            // Solicitud para mover la tarea
+            fetch(`public/kanban/${columnaId}/tareas/${tareaId}/mover`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({
-                        kanban_column_id: nuevaColumnaId, // Enviar el nuevo ID de columna
+                        kanban_column_id: nuevaColumnaId
                     }),
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Tarea movida correctamente.');
-                        // Actualizar la tarea en el DOM
-                        actualizarDOMTarea(tareaId, nuevaColumnaId);
+                        // Mover la tarea en el DOM
+                        const tareaElement = document.querySelector(`[data-tarea-id="${tareaId}"]`);
+                        const nuevaColumnaContainer = document.querySelector(`[data-columna-id="${nuevaColumnaId}"] .kanban-tareas`);
+                        nuevaColumnaContainer.appendChild(tareaElement);
+                        console.log('Tarea movida correctamente.');
                     } else {
-                        alert('Hubo un error al mover la tarea: ' + data.error);
+                        console.error('Error al mover la tarea:', data.error);
                     }
                 })
-                .catch(error => {
-                    console.error('Error al mover la tarea:', error);
-                    alert('Ocurrió un error al intentar mover la tarea.');
-                });
+                .catch(error => console.error('Error al mover la tarea:', error));
         }
 
 
 
+        // Asignar eventos a los botones de mover tarea
+        document.querySelectorAll('.btn-mover-izquierda').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tareaId = btn.closest('[data-tarea-id]').getAttribute('data-tarea-id');
+                const columnaId = btn.closest('[data-columna-id]').getAttribute('data-columna-id');
+                moverTarea(tareaId, columnaId, 'left');
+            });
+        });
 
-        // Función para obtener el ID de la columna vecina
-        function obtenerColumnaVecina(columnaId, direccion) {
-            const columnaActual = document.querySelector(`[data-columna-id="${columnaId}"]`);
-            if (!columnaActual) return null;
-
-            let columnaVecina;
-
-            if (direccion === 'left') {
-                columnaVecina = columnaActual.previousElementSibling;
-            } else if (direccion === 'right') {
-                columnaVecina = columnaActual.nextElementSibling;
-            }
-
-            return columnaVecina ? columnaVecina.getAttribute('data-columna-id') : null;
-        }
-
-        // Función para actualizar la tarea en el DOM (después de moverla)
-        function actualizarDOMTarea(tareaId, nuevaColumnaId) {
-            const tareaElement = document.querySelector(`[data-tarea-id="${tareaId}"]`);
-            if (tareaElement) {
-                // Eliminar la tarea del DOM y agregarla a la nueva columna
-                const nuevaColumna = document.querySelector(`[data-columna-id="${nuevaColumnaId}"]`);
-                if (nuevaColumna) {
-                    nuevaColumna.appendChild(tareaElement); // Mover la tarea al nuevo contenedor
-                }
-            }
-        }
+        document.querySelectorAll('.btn-mover-derecha').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tareaId = btn.closest('[data-tarea-id]').getAttribute('data-tarea-id');
+                const columnaId = btn.closest('[data-columna-id]').getAttribute('data-columna-id');
+                moverTarea(tareaId, columnaId, 'right');
+            });
+        });
 
 
 
@@ -696,6 +691,8 @@
         }
 
         modalCancelar.addEventListener('click', ocultarModal);
+        modalCancelarTarea.addEventListener('click', ocultarModalTarea);
+
     });
 </script>
 @endsection

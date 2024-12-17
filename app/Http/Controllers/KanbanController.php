@@ -89,7 +89,7 @@ class KanbanController extends Controller
 
     public function obtenerTableros($proyectoId)
     {
-        $tableros = KanbanBoard::with('columns.tasks')->where('proyecto_id', $proyectoId)->get();
+        $tableros = KanbanBoard::with('columns','columns.tasks')->where('proyecto_id', $proyectoId)->get();
         return response()->json(['tableros' => $tableros]);
     }
 
